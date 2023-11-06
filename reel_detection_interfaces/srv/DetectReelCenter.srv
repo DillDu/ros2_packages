@@ -1,0 +1,3 @@
+sensor_msgs/Image img_msg
+---
+sensor_msgs/Image result_img_msg
