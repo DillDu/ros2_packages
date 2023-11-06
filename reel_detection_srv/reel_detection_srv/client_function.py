@@ -15,10 +15,10 @@ class ReelFittingClientAsync(Node):
 
     def __init__(self):
         super().__init__('reel_fitting_client_async')
-        self.cli = self.create_client(DetectReelCenter, 'detect_reel_center')       # CHANGE
+        self.cli = self.create_client(DetectReelCenter, 'detect_reel_center')       
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
-        self.req = DetectReelCenter.Request()                                   # CHANGE
+        self.req = DetectReelCenter.Request()                                   
 
     def send_request(self):
         bridge = CvBridge()
