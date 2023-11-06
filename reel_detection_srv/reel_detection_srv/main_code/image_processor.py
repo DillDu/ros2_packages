@@ -186,7 +186,7 @@ def sharpen_img(img, blur = True, blur_size = 3):
     if blur:
         ret_img = cv2.GaussianBlur(img,(blur_size,blur_size),0)
     return ret_img
-def preproc(img, grayscale = False):
+def preproc(img, output_gray = False):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     hue_shift = -50
     saturation_factor = 1.5
@@ -194,7 +194,7 @@ def preproc(img, grayscale = False):
     img[:, :, 1] = np.clip(img[:, :, 1] * saturation_factor, 0, 255)
     
     img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
-    if grayscale:
+    if output_gray:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return img 
     
@@ -290,7 +290,6 @@ if __name__ == '__main__':
     
     # img = cv2.imread('reel_data/reel_7_4.png',cv2.IMREAD_GRAYSCALE)
 
-    
     # valid_contours = get_contours(img, filter=True)
     # for c in valid_contours:
     #     for i in range(len(c)):

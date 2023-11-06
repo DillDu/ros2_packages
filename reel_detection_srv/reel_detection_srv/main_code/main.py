@@ -22,7 +22,7 @@ def get_ellipse_pts(params, npts=100, tmin=0, tmax=2*np.pi):
     y = y0 + ap * np.cos(t) * np.sin(phi) + bp * np.sin(t) * np.cos(phi)
     return np.array([x, y])
 
-def find_ellipse_center_point(gray_img):
+def find_ellipse_center_point(img):
     #ransac params
     inlier_threshold = 0.002
     confidence = 0.95
@@ -32,16 +32,18 @@ def find_ellipse_center_point(gray_img):
     least_inliers = 0 # minimum inlier amount to be considered a candidate model
     min_inlier_rate = 0.6
     
-    [h,w] = gray_img.shape[:2]
-    result_img = cv2.cvtColor(gray_img,cv2.COLOR_GRAY2BGR)
-    contours = improc.get_contours(gray_img)
+    img = improc.preproc(img, output_gray=True)
+    
+    [h,w] = img.shape[:2]
+    result_img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+    contours = improc.get_contours(img)
     # contours = improc.simplify_contours(contours, 0.1)
 
     final_points = np.empty((0,2))
     contour_img = result_img.copy()
     sample_step_size = int(np.ceil(np.log(h*w)))+2
 
-    K = normalizer.get_normalize_matrix(gray_img)
+    K = normalizer.get_normalize_matrix(img)
     
     for i in range(len(contours)):
         points = contours[i].squeeze(axis=1)
