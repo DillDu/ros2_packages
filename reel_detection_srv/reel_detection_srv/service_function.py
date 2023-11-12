@@ -20,7 +20,7 @@ class ReelFittingService(Node):
     
     def detect_reel_center_callback(self, request, response):
         bridge = CvBridge()
-        img = bridge.imgmsg_to_cv2(request.img_msg)
+        img = bridge.imgmsg_to_cv2(request.img_msg, 'bgr8')
         result_img = m.find_ellipse_center_point(img)
         response.result_img_msg = bridge.cv2_to_imgmsg(result_img)
         self.get_logger().info('Incoming request received\n' % ())
