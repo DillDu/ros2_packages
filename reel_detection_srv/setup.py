@@ -20,10 +20,11 @@ setup(
     license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': ['service = reel_detection_srv.service_function:main',
-                            'client = reel_detection_srv.client_function:main',
-                            'center_estimation_3d_client = reel_detection_srv.center_estimation_3d_client:main',
-                            'center_estimation_3d_service = reel_detection_srv.center_estimation_3d_service:main',
+        'console_scripts': [
+            # 'service = reel_detection_srv.service_function:main',
+            # 'client = reel_detection_srv.client_function:main',
+            'reel_center_estimation_client = reel_detection_srv.reel_center_estimation_client:main',
+            'reel_center_estimation_service = reel_detection_srv.reel_center_estimation_service:main',
         ],
     },
 )

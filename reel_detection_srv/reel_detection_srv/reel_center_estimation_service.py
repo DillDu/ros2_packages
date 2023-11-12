@@ -10,10 +10,10 @@ from reel_detection_interfaces.srv import DetectReelCenter3D
 from reel_detection_srv.main_code import reel_detection_main as rdm
 
 
-class ReelCenter3DService(Node):
+class ReelCenterEstimationService(Node):
 
     def __init__(self):
-        super().__init__('center_estimation_3d_service')
+        super().__init__('reel_center_estimation_service')
         self.srv = self.create_service(DetectReelCenter3D, 'detect_reel_center_3d', self.detect_reel_center_callback)
     
     def detect_reel_center_callback(self, request, response):
@@ -29,7 +29,7 @@ class ReelCenter3DService(Node):
 
         return response
     
-    def convert_imsgs_to_imgs(img_msgs):
+    def convert_imsgs_to_imgs(self, img_msgs):
         bridge = CvBridge()
         imgs = []
         for msg in img_msgs:
@@ -40,9 +40,9 @@ class ReelCenter3DService(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    reel_center_3d_service = ReelCenter3DService()
+    reel_center_estimation_service = ReelCenterEstimationService()
 
-    rclpy.spin(reel_center_3d_service)
+    rclpy.spin(reel_center_estimation_service)
 
     rclpy.shutdown()
 
