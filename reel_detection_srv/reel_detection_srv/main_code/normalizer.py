@@ -5,7 +5,15 @@ import numpy as np
 
 WIDTH = 640
 HEIGHT = 480
-def get_normalize_matrix(img):
+
+def get_intrinsic_matrix():
+    # LAB
+    K = np.array([[604.817626953125, 0, 317.8514404296875],
+                  [0, 604.719482421875, 249.26316833496094],
+                  [0, 0, 1]])
+    return K
+
+def get_intrinsic_matrix2(img):
     # POCOPHONE
     # K = np.array([[1207.096268, 0, 835.391219],
     #           [0, -1208.038718, 618.905228],

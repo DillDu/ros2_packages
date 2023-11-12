@@ -6,8 +6,6 @@ from rclpy.node import Node
 import cv2
 
 from reel_detection_interfaces.srv import DetectReelCenter
-# from sensor_msgs.msg import Image
-# from std_msgs.msg import Header
 from cv_bridge import CvBridge
 
 
@@ -15,7 +13,7 @@ class ReelFittingClientAsync(Node):
 
     def __init__(self):
         super().__init__('reel_fitting_client_async')
-        self.cli = self.create_client(DetectReelCenter, 'detect_reel_center')       
+        self.cli = self.create_client(DetectReelCenter, 'detect_reel_center_2d')       
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         self.req = DetectReelCenter.Request()                                   

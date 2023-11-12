@@ -22,6 +22,8 @@ setup(
     entry_points={
         'console_scripts': ['service = reel_detection_srv.service_function:main',
                             'client = reel_detection_srv.client_function:main',
+                            'center_estimation_3d_client = reel_detection_srv.center_estimation_3d_client:main',
+                            'center_estimation_3d_service = reel_detection_srv.center_estimation_3d_service:main',
         ],
     },
 )

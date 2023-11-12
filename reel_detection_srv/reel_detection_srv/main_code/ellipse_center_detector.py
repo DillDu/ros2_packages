@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.linalg as la
+from reel_detection_srv.main_code import transformation as tr
 
 def calc_tildeH(coeffs):
     # ax2+bxy+cy2+dx+ey+f
@@ -27,7 +28,7 @@ def calc_tildeH(coeffs):
     
     return tH
 
-def create_transform_matrix2(coeffs, beta):
+def create_Alvarez_matrix(coeffs, beta):
 
     # ax2+bxy+cy2+dx+ey+f
     a,c,b,d,e,f = coeffs
@@ -98,7 +99,7 @@ def create_transform_matrix2(coeffs, beta):
 
     return H1, H2
     
-def get_point_line_distance(point, line_param):
+def calc_point_line_distance(point, line_param):
     p = point.reshape((len(point),))
     A = line_param[0].reshape((len(line_param[0]),))
     D = line_param[1].reshape((len(line_param[1]),))
@@ -108,18 +109,67 @@ def get_point_line_distance(point, line_param):
     d = np.linalg.norm(p-p_l)
     return d, p_l
 
+def find_closest_point_to_two_lines(lines_params):
+    pass
+
 def find_closest_point_to_lines(lines_params):
+    """ Line equation: L = A + tD
+
+    Args:
+        lines_params (array): array include two np array: [A, D]
+
+    Returns:
+        p: closest point to lines
+    """
     I = np.eye(3)
     S = np.zeros((3,3))
-    C = np.zeros((3,))
+    C = np.zeros((3))
     
     for param in lines_params:
-        ni = (param[1]/np.linalg.norm(param[1])).reshape((3,))
-        ai = param[0].reshape((3,))
-        S += (I - ni @ ni.T)
-        C += (I - ni @ ni.T) @ ai
+        ai = param[0]
+        ni = (param[1]/np.linalg.norm(param[1])).reshape((3,1))
+        S += (I - np.outer(ni, ni.T))
+        C += (I - np.outer(ni, ni.T)) @ ai
     
     Sp = np.linalg.pinv(S)
     p = Sp @ C
     
     return p
+
+# def get_line_equation(K, point2d):
+#     p_camera = np.linalg.inv(K) @ point2d
+#     A = np.array([0,0,0])
+#     D = p_camera/np.linalg.norm(p_camera)
+#     return A, D
+def get_two_line_distance(lines_params):
+    A1, D1 = lines_params[0]
+    A2, D2 = lines_params[1]
+    d = 0
+    if np.linalg.norm(np.cross(D1, D2)) == 0:
+        B = D1
+        d = abs(np.cross(B, A1-A2)) / np.linalg.norm(B)
+    else:
+        B = np.cross(D1, D2)
+        d = abs(np.dot(B, A1-A2)) / np.linalg.norm(B)
+    return d
+
+def get_world_line_params(point_2d, K, rots, trans):
+    T_cw = tr.get_w2c_transform_matrix(rots, trans)
+    # point_2d = np.append(point_2d, 1.)
+    point_cam = np.linalg.inv(K) @ point_2d
+    point_cam = np.append(point_cam, 1.)
+    point_w = T_cw @ point_cam
+    point_w = point_w[:-1]
+    focal = np.array([0,0,0,1])
+    focal_w = T_cw @ focal
+    focal_w = focal_w[:-1]
+    D = point_w - focal_w
+    D = D/np.linalg.norm(D)
+    return focal_w, D
+
+if __name__ == "__main__":
+    bin_length = 3
+    for i in range(8):
+       bin_list =  format(i, f'0{bin_length}b')
+       print(bin_list[0])
+    
