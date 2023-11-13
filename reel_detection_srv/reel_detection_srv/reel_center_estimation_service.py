@@ -17,14 +17,20 @@ class ReelCenterEstimationService(Node):
         self.srv = self.create_service(DetectReelCenter3D, 'detect_reel_center_3d', self.detect_reel_center_callback)
     
     def detect_reel_center_callback(self, request, response):
-        # bridge = CvBridge()
+        bridge = CvBridge()
         imgs = self.convert_imsgs_to_imgs(request.img_msgs)
-        rots_array = [np.array(request.rot1, dtype=np.float32), np.array(request.rot2, dtype=np.float32)]
-        trans_array = [np.array(request.pos1, dtype=np.float32), np.array(request.pos2, dtype=np.float32)]
+        rots_array = [np.array(request.rot1, dtype=np.float64), np.array(request.rot2, dtype=np.float64)]
+        trans_array = [np.array(request.pos1, dtype=np.float64), np.array(request.pos2, dtype=np.float64)]
         
         best_center, best_line_group, result_imgs = rdm.find_ellipse_center_3d(imgs, rots_array, trans_array)
         
+        result_img_msgs = []
+        for img in result_imgs:
+            img_msg = bridge.cv2_to_imgmsg(img)
+            result_img_msgs.append(img_msg)
+        
         response.center_point = best_center.tolist()
+        response.result_img_msgs = result_img_msgs
         self.get_logger().info('Incoming request received\n' % ())
 
         return response

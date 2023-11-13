@@ -2,15 +2,11 @@
 import sys
 import rclpy
 from rclpy.node import Node
+from reel_detection_interfaces.srv import DetectReelCenter3D
 
 import cv2
-import os
-
-from reel_detection_interfaces.srv import DetectReelCenter3D
 from cv_bridge import CvBridge
-
 from reel_detection_srv.main_code import transformation as tr
-
 
 class ReelCenterEstimationClient(Node):
 
@@ -30,10 +26,9 @@ class ReelCenterEstimationClient(Node):
         
         img_msgs = [bridge.cv2_to_imgmsg(cv2.imread(img_path1), "bgr8"),
                     bridge.cv2_to_imgmsg(cv2.imread(img_path2), "bgr8")]
-        
         rot1, pos1 = tr.read_transform_data(pose_path1)
         rot2, pos2 = tr.read_transform_data(pose_path2)
-        
+    
         self.req.img_msgs = img_msgs
         self.req.pos1 = pos1.tolist()
         self.req.pos2 = pos2.tolist()
@@ -61,6 +56,15 @@ def main(args=None):
                 reel_center_estimation_client.get_logger().info(
                     'Result of center_estimation: [{}]'.format(response.center_point))
                     # 'Result of center_estimation: [%f]' % (response.center_point))
+                bridge = CvBridge()
+                imgs = []
+                msgs = response.result_img_msgs
+                for i in range(len(msgs)):
+                    img = bridge.imgmsg_to_cv2(msgs[i])
+                    imgs.append(img)
+                    cv2.imshow('img:{}'.format(i),img)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
 
             break
 

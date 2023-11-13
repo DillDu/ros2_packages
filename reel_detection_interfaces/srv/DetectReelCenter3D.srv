@@ -1,7 +1,10 @@
 sensor_msgs/Image[] img_msgs
-float32[] pos1
-float32[] pos2
-float32[] rot1
-float32[] rot2
+# std_msgs/Float64MultiArray pos_array
+# std_msgs/Float64MultiArray rot_array
+float64[] pos1
+float64[] pos2
+float64[] rot1
+float64[] rot2
 ---
-float32[] center_point
+float64[] center_point
+sensor_msgs/Image[] result_img_msgs

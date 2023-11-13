@@ -25,8 +25,8 @@ def read_transform_data(path):
         trans = pos_match.group(1)
         rots = rot_match.group(1)
 
-        trans = np.array([float(num) for num in trans.split(',')], dtype=np.float32)
-        rots = np.array([float(num) for num in rots.split(',')], dtype=np.float32)
+        trans = np.array([float(num) for num in trans.split(',')], dtype=np.float64)
+        rots = np.array([float(num) for num in rots.split(',')], dtype=np.float64)
     else:
         print("Arrays not found in the response.")
     return rots, trans
