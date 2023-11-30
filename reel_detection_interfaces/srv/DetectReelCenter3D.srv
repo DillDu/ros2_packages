@@ -1,9 +1,7 @@
 sensor_msgs/Image img_msg
 sensor_msgs/Image depth_msg
 float64[] pos
-# float64[] pos2
 float64[] rot
-# float64[] rot2
 ---
 float64[] center_point
 sensor_msgs/Image result_img_msg
