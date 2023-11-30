@@ -18,19 +18,22 @@ class ReelCenterEstimationService(Node):
     
     def detect_reel_center_callback(self, request, response):
         bridge = CvBridge()
-        imgs = self.convert_imsgs_to_imgs(request.img_msgs)
-        rots_array = [np.array(request.rot1, dtype=np.float64), np.array(request.rot2, dtype=np.float64)]
-        trans_array = [np.array(request.pos1, dtype=np.float64), np.array(request.pos2, dtype=np.float64)]
+        img = bridge.imgmsg_to_cv2(request.img_msg, 'bgr8')
+        rots = np.array(request.rot)
+        trans = np.array(request.pos)
+        depth = bridge.imgmsg_to_cv2(request.depth_msg, desired_encoding='passthrough')
         
-        best_center, best_line_group, result_imgs = rdm.find_ellipse_center_3d(imgs, rots_array, trans_array)
+        # best_center, best_line_group, result_imgs = rdm.find_ellipse_center_3d(imgs, rots_array, trans_array)
+        best_center, result_img, _,_,_ = rdm.find_ellipse_center_3d_new(img, depth, rots, trans)
         
-        result_img_msgs = []
-        for img in result_imgs:
-            img_msg = bridge.cv2_to_imgmsg(img)
-            result_img_msgs.append(img_msg)
+        # result_img_msgs = []
+        # for img in result_imgs:
+        #     img_msg = bridge.cv2_to_imgmsg(img)
+        #     result_img_msgs.append(img_msg)
+        result_img_msg = bridge.cv2_to_imgmsg(result_img)
         
         response.center_point = best_center.tolist()
-        response.result_img_msgs = result_img_msgs
+        response.result_img_msg = result_img_msg
         self.get_logger().info('Incoming request received\n' % ())
 
         return response

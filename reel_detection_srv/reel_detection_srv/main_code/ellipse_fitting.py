@@ -2,6 +2,17 @@ import numpy as np
 from numpy import linalg as la
 import random
 
+def get_sample_indices(points_num, sample_size, min_dist = 3):
+    sample_indices = []
+    while True:
+        sample_indices = random.sample(range(points_num), sample_size)
+        sample_sort = sorted(sample_indices)
+        diffs = np.diff(sample_sort)
+        min_diff = np.min(diffs)
+        if min_diff > min_dist:
+            break
+    return sample_indices
+    
 def cart_to_pol(coeffs):
     """
         Convert the cartesian conic coefficients, (a, b, c, d, e, f), to the
@@ -316,8 +327,7 @@ def get_inliers(points, coeffs, inlier_threshold):
 
     return inliers
 
-
-def img_ransac_ellipse_fit(points, inlier_threshold, confidence, max_failed_num = 10000, max_iteration = np.inf, least_inliers = 0, max_eccentricity = 1):
+def img_ransac_ellipse_fit(points, inlier_threshold, confidence, max_failed_num = 10000, max_iteration = np.inf, least_inliers = 0, max_eccentricity = 1, min_sample_dist = 0):
     """
     Standalone function for direct call
     Args:
@@ -363,7 +373,8 @@ def img_ransac_ellipse_fit(points, inlier_threshold, confidence, max_failed_num 
     while iteration < np.min([max_iteration, ransac_iteration_num]):
 
         # choose random points for model fitting
-        sample_indices = random.sample(range(points_num), sample_size)
+        # sample_indices = random.sample(range(points_num), sample_size)
+        sample_indices = get_sample_indices(points_num, sample_size, min_sample_dist)
         coeffs = ellipse_fit(normed_points[sample_indices])
         inlier_indices = get_inliers(normed_points, coeffs, inlier_threshold)
 

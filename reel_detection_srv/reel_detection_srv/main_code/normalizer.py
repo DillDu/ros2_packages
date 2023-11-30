@@ -6,31 +6,31 @@ import numpy as np
 WIDTH = 640
 HEIGHT = 480
 
-def get_intrinsic_matrix():
-    # LAB
-    K = np.array([[604.817626953125, 0, 317.8514404296875],
-                  [0, 604.719482421875, 249.26316833496094],
-                  [0, 0, 1]])
-    return K
-
-def get_intrinsic_matrix2(img):
+def get_intrinsic_matrix(img = []):
     # POCOPHONE
     # K = np.array([[1207.096268, 0, 835.391219],
     #           [0, -1208.038718, 618.905228],
     #           [0, 0, 1]])
     # # 1663x1247
-
+    
     # LAB
-    K = np.array([[604.817626953125, 0, 317.8514404296875],
+    K_low = np.array([[604.817626953125, 0, 317.8514404296875],
                   [0, 604.719482421875, 249.26316833496094],
                   [0, 0, 1]])
+    K_high = np.array([[909.49713135, 0, 652.30175781],
+                       [0, 909.56134033, 361.22845459],
+                       [0, 0, 1]])
     
-    [h,w] = img.shape[:2]
-    rx = w/WIDTH
-    ry = h/HEIGHT
-    K[0,:] *= rx
-    K[1,:] *= ry
-    return K
+    if len(img) > 0 and img.shape[0] == 720:
+        return K_high
+    # if len(img) > 0:
+    #     [h,w] = img.shape[:2]
+    #     rx = w/WIDTH
+    #     ry = h/HEIGHT
+    #     K[0,:] *= rx
+    #     K[1,:] *= ry
+    
+    return K_low
 
 
 def normalize_img_points(points, K):
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     #  img = cv2.imread('reel_data/reel1.png',cv2.IMREAD_GRAYSCALE)
     #  [h,w] = img.shape[:2]
      
-    #  K = get_normalize_matrix(img)
+    #  K = get_intrinsic_matrix()
     #  K = np.linalg.inv(K)
     #  tl = K @ np.array([0,0,1]).T
     #  tr = K @ np.array([w,0,1]).T

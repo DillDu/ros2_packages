@@ -243,7 +243,8 @@ def get_contours(img, min_point_num = 50, filter = True):
     img = sharpen_img(img)
     edge_img = get_edge_img(img)
     edge_img = remove_corners(edge_img)
-    edge_img = remove_lines(edge_img.astype(np.uint8))
+    # edge_img = remove_lines(edge_img.astype(np.uint8))
+    edge_img = remove_lines(edge_img)
 
     contours, _ = cv2.findContours(edge_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
@@ -276,6 +277,12 @@ def get_contours(img, min_point_num = 50, filter = True):
         
     return valid_contours
 
+# def contour_grid_down_sampling(contours):
+#     for i in range(len(contours)):
+#         points = contours[i].squeeze(axis=1)
+            
+#     pass
+
 def draw_img_points(img, points, radius, color):
     for i in range(len(points)):
         x = int(points[i,0])
@@ -288,14 +295,42 @@ if __name__ == '__main__':
     # generate_contour_img_files('reel_data')
     # generate_orientation_edge_imgs('reel_data')
     
-    # img = cv2.imread('reel_data/reel_7_4.png',cv2.IMREAD_GRAYSCALE)
-
-    # valid_contours = get_contours(img, filter=True)
-    # for c in valid_contours:
-    #     for i in range(len(c)):
-    #         cv2.circle(img, c[i][0], 2, 255,-1)
-            
-    # cv2.imshow("win,",img)
+    import matplotlib.pyplot as plt
+    img1 = cv2.imread('reel_data/reel_0_0.png')
+    img2 = cv2.imread('reel_data/reel_0_1.png')
+    
+    img1 = preproc(img1, True)
+    img1 = sharpen_img(img1)
+    con1 = get_contours(img1)
+    img2 = preproc(img2, True)
+    con2 = get_contours(img2)
+    
+    ret1 = cv2.cvtColor(img1, cv2.COLOR_GRAY2BGR)
+    ret2 = cv2.cvtColor(img2, cv2.COLOR_GRAY2BGR)
+    
+    # valid_contours = get_contours(img2, filter=True)
+    for i in range(len(con1)):
+        c = con1[i]
+        for j in range(len(c)):
+            cv2.circle(ret1, c[j][0], 2, utils.get_color(i,True),-1)
+    for i in range(len(con2)):
+        c = con2[i]
+        for j in range(len(c)):
+            cv2.circle(ret2, c[j][0], 2, utils.get_color(i,True),-1)
+    
+    # cv2.imshow('Original', img)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
+    plt.subplot(1, 2, 1)
+    # plt.imshow(img1, cmap='gray')
+    plt.imshow(ret1, cmap='gray')
+    plt.title('Contour detection 1')
+    plt.axis('off')
+
+    # Plot the second image
+    plt.subplot(1, 2, 2)
+    plt.imshow(ret2, cmap='gray')
+    plt.title('Contour detection 2')
+    plt.axis('off')
+    plt.show()
     pass
