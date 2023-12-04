@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.linalg as la
+
 from reel_detection_srv.main_code import transformation as tr
 
 def calc_tildeH(coeffs):
@@ -174,11 +175,11 @@ def create_Alvarez_matrix2(coeffs, K):
     l1_y0 = l1_y0[:,:-1]
     l2_y0 = l2_y0[:,:-1]
     
-    reverse = False
-    if np.sign(dir1[0]) == np.sign(dir1[1]):
-        reverse = True
+    # reverse = False
+    # if np.sign(dir1[0]) == np.sign(dir1[1]):
+    #     reverse = True
     
-    if (rate1 < rate2) == (dir1[dim] > 0) and not reverse:
+    if (rate1 < rate2) == (dir1[dim] > 0):
         return H1, l1_y0, H2, l2_y0, dir1
     return H2, l2_y0, H1, l1_y0, dir2
 

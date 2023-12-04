@@ -165,11 +165,11 @@ def find_ellipse_center_2d(img):
     # result_img = cv2.line(result_img, l2_x0[0], l2_x0[-1], color=(255,255,0), thickness=2)
     # result_img = cv2.line(result_img, l2_y0[0], l2_y0[-1], color=(255,255,0), thickness=2)
     # result_img = improc.draw_img_points(result_img, l_x0,5,(255,0,0))
-    result_img = improc.draw_img_points(result_img, l_y0,5,(255,0,0))
+    result_img = improc.draw_img_points(result_img, l_y0,3,(255,0,0))
     # result_img = improc.draw_img_points(result_img, l2_x0,5,(0,0,255))
-    result_img = improc.draw_img_points(result_img, l2_y0,5,(0,0,255))
-    result_img = cv2.circle(result_img, (int(center[0]),int(center[1])),7,(255,0,0),-1)
-    result_img = cv2.circle(result_img, (int(center2[0]),int(center2[1])),7,(0,0,255),-1)
+    result_img = improc.draw_img_points(result_img, l2_y0,3,(0,0,255))
+    result_img = cv2.circle(result_img, (int(center[0]),int(center[1])),5,(255,0,0),-1)
+    result_img = cv2.circle(result_img, (int(center2[0]),int(center2[1])),5,(0,0,255),-1)
     # if len(avg_center) > 0:
     #     result_img = cv2.circle(result_img, (int(avg_center[0]),int(avg_center[1])),7,(0,255,255),-1)
 
@@ -187,43 +187,52 @@ def find_ellipse_center_3d(imgs, rots_array, trans_array):
         rots = rots_array[i]
         trans = trans_array[i]
         
-        result_img, center1, center2, contour_img = find_ellipse_center_2d(img)
-        centers = [center1,center2]
-        centers_array.append(centers)
+        result_img, center1, center2, contour_img, debug = find_ellipse_center_2d(img)
+        # centers = [center1,center2]
+        # centers_array.append(centers)
         
         L1 = ecd.get_world_line_params(center1, K, rots, trans)
         L2 = ecd.get_world_line_params(center2, K, rots, trans)
         lines = [L1, L2]
-        lines_array.append(lines)
+        lines_array.append(L1)
         result_imgs.append(result_img)
         
-    group_num = 2**imgs_num
-    line_groups = []
-    for i in range(group_num):
-        bin_list =  format(i, f'0{imgs_num}b')
-        line_group = []
-        for j in range(imgs_num):
-            line_group.append(lines_array[j][int(bin_list[j])])
-        line_groups.append(line_group)
+# generate line pairs
+    # group_num = 2**imgs_num
+    # line_groups = []
+    # for i in range(group_num):
+    #     bin_list =  format(i, f'0{imgs_num}b')
+    #     line_group = []
+    #     for j in range(imgs_num):
+    #         line_group.append(lines_array[j][int(bin_list[j])])
+    #     line_groups.append(line_group)
     
-    shortest_d = np.inf
-    best_line_group = []
-    best_center = [0,0,0]
-    for line_group in line_groups:
+    # shortest_d = np.inf
+    # best_line_group = []
+    # best_center = [0,0,0]
+    # for line_group in line_groups:
         d_sum = 0
-        center_point = ecd.find_closest_point_to_lines(line_group)
-        for line in line_group:
+        # center_point = ecd.find_closest_point_to_lines(line_group)
+        center_point = ecd.find_closest_point_to_lines(lines_array)
+        # for line in line_group:
+        for line in lines_array:
             d,_ = ecd.calc_point_line_distance(center_point, line)
             d_sum += d
-        if d_sum < shortest_d:
-            shortest_d = d_sum
-            best_line_group = line_group
-            best_center = center_point
+        # if d_sum < shortest_d:
+        #     shortest_d = d_sum
+        best_line_group = lines_array
+        best_center = center_point
     
-    print(best_center)
-    print(shortest_d)
+    # d_sum = 0
+    # center_point = ecd.find_closest_point_to_lines(lines_array)
+    # for line in lines_array:
+    #     d,_ = ecd.calc_point_line_distance(center_point, line)
+    #     d_sum += d
+        
+    # print(center_point)
+    # print(d_sum)
     
-    return best_center, lines_array, result_imgs
+    return best_center, result_imgs, best_line_group, d_sum
 
 def find_ellipse_center_3d_new(img, depth_img, rots, trans):
     K = normalizer.get_intrinsic_matrix(img)
@@ -264,29 +273,29 @@ good result: pos(0,1) pos(2,3)
 '''
 
 if __name__ == "__main__":
-    # path = 'test_sample'
-    # imgs = []
-    # rots_array = []
-    # trans_array = []
-    # result_imgs = []
-    # import os
-    # if os.path.isdir(path):
-    #     files = os.listdir(path)
-    #     for file in files:
-    #         file_path = path + '/' + file
-    #         if os.path.isfile(file_path) and file_path.endswith('.txt'):
-    #             rots, trans = tr.read_transform_data(file_path)
-    #             rots_array.append(rots)
-    #             trans_array.append(trans)
-    #         elif os.path.isfile(file_path) and file_path.endswith('.png'):
-    #             img = cv2.imread(file_path)
-    #             imgs.append(img)
+    path = 'test_sample'
+    imgs = []
+    rots_array = []
+    trans_array = []
+    result_imgs = []
+    import os
+    if os.path.isdir(path):
+        files = os.listdir(path)
+        for file in files:
+            file_path = path + '/' + file
+            if os.path.isfile(file_path) and file_path.endswith('.txt'):
+                rots, trans = tr.read_transform_data(file_path)
+                rots_array.append(rots)
+                trans_array.append(trans)
+            elif os.path.isfile(file_path) and file_path.endswith('.png'):
+                img = cv2.imread(file_path)
+                imgs.append(img)
     # import time
     # start = time.time()
     # center_point, lines_array, result_imgs = find_ellipse_center_3d(imgs, rots_array, trans_array)
     # print(f'time:{time.time()-start}')
     
-
+    # import matplotlib.pyplot as plt
     # # fig1 = plt.figure()
     # # ax1 = fig1.add_subplot(121)
     # # ax1.imshow(cv2.cvtColor(result_imgs[0],cv2.COLOR_BGR2RGB))

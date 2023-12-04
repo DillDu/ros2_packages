@@ -35,27 +35,30 @@ class ReelCenterEstimationClient(Node):
     
     def send_request(self):
         bridge = CvBridge()
-        img_path1 = sys.argv[1]
-        img_path2 = sys.argv[2]
+        img_path = sys.argv[1]
+        depth_path = sys.argv[2]
+        # img_path2 = sys.argv[2]
         pose_path = sys.argv[3]
         # pose_path2 = sys.argv[4]
         
-        img_msgs = [bridge.cv2_to_imgmsg(cv2.imread(img_path1), "bgr8"),
-                     bridge.cv2_to_imgmsg(cv2.imread(img_path2), "bgr8")]
+        img_msg = bridge.cv2_to_imgmsg(cv2.imread(img_path), "bgr8")
+                    # bridge.cv2_to_imgmsg(cv2.imread(img_path2), "bgr8")]
         # rot, pos = tr.read_transform_data(pose_path)
         # rot2, pos2 = tr.read_transform_data(pose_path2)
+        
+        depth_array = np.load(depth_path)
+        depth_msg = bridge.cv2_to_imgmsg(depth_array, encoding='passthrough')
     
         pose = self.get_pos_data(pose_path)
-        pos1 = pose[5*2]
-        rot1 = pose[5*2+1]
-        pos2 = pose[7*2]
-        rot2 = pose[7*2+1]
+        pos = pose[0*2]
+        rot = pose[0*2+1]
         
-        self.req.img_msgs = img_msgs
-        self.req.pos1 = pos1.tolist()
-        self.req.pos2 = pos2.tolist()
-        self.req.rot1 = rot1.tolist()
-        self.req.rot2 = rot2.tolist()
+        self.req.img_msg = img_msg
+        self.req.pos = pos.tolist()
+        # self.req.pos2 = pos2.tolist()
+        self.req.rot = rot.tolist()
+        # self.req.rot2 = rot2.tolist()
+        self.req.depth_msg = depth_msg
         
         self.future = self.cli.call_async(self.req)
     
@@ -79,12 +82,13 @@ def main(args=None):
                     'Result of center_estimation: [{}]'.format(response.center_point))
                     # 'Result of center_estimation: [%f]' % (response.center_point))
                 bridge = CvBridge()
-                imgs = []
-                msgs = response.result_img_msgs
-                for i in range(len(msgs)):
-                    img = bridge.imgmsg_to_cv2(msgs[i])
-                    imgs.append(img)
-                    cv2.imshow('img:{}'.format(i),img)
+                # imgs = []
+                # msgs = response.result_img_msgs
+                # for i in range(len(msgs)):
+                #     img = bridge.imgmsg_to_cv2(msgs[i])
+                #     imgs.append(img)
+                #     cv2.imshow('img:{}'.format(i),img)
+                msg = response.result_img_msg
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
 
