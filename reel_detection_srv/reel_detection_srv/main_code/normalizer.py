@@ -6,7 +6,7 @@ import numpy as np
 WIDTH = 640
 HEIGHT = 480
 
-def get_intrinsic_matrix(img = []):
+def get_intrinsic_matrix(img):
     # POCOPHONE
     # K = np.array([[1207.096268, 0, 835.391219],
     #           [0, -1208.038718, 618.905228],
@@ -14,15 +14,15 @@ def get_intrinsic_matrix(img = []):
     # # 1663x1247
     
     # LAB
-    K_low = np.array([[604.817626953125, 0, 317.8514404296875],
+    K_480p = np.array([[604.817626953125, 0, 317.8514404296875],
                   [0, 604.719482421875, 249.26316833496094],
                   [0, 0, 1]])
-    K_high = np.array([[909.49713135, 0, 652.30175781],
-                       [0, 909.56134033, 361.22845459],
+    K_720p = np.array([[907.2265014648438, 0, 636.7771606445312],
+                       [0, 907.0792236328125, 373.8947448730469],
                        [0, 0, 1]])
     
     if len(img) > 0 and img.shape[0] == 720:
-        return K_high
+        return K_720p
     # if len(img) > 0:
     #     [h,w] = img.shape[:2]
     #     rx = w/WIDTH
@@ -30,7 +30,7 @@ def get_intrinsic_matrix(img = []):
     #     K[0,:] *= rx
     #     K[1,:] *= ry
     
-    return K_low
+    return K_480p
 
 
 def normalize_img_points(points, K):

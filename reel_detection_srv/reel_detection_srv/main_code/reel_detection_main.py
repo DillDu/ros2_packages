@@ -177,7 +177,7 @@ def find_ellipse_center_2d(img):
     return result_img, center, center2, contour_img, debug
     
 def find_ellipse_center_3d(imgs, rots_array, trans_array):
-    K = normalizer.get_intrinsic_matrix()
+    K = normalizer.get_intrinsic_matrix(imgs[0])
     imgs_num = len(imgs)
     centers_array = []
     lines_array = []
@@ -273,23 +273,23 @@ good result: pos(0,1) pos(2,3)
 '''
 
 if __name__ == "__main__":
-    path = 'test_sample'
-    imgs = []
-    rots_array = []
-    trans_array = []
-    result_imgs = []
-    import os
-    if os.path.isdir(path):
-        files = os.listdir(path)
-        for file in files:
-            file_path = path + '/' + file
-            if os.path.isfile(file_path) and file_path.endswith('.txt'):
-                rots, trans = tr.read_transform_data(file_path)
-                rots_array.append(rots)
-                trans_array.append(trans)
-            elif os.path.isfile(file_path) and file_path.endswith('.png'):
-                img = cv2.imread(file_path)
-                imgs.append(img)
+    # path = 'test_sample'
+    # imgs = []
+    # rots_array = []
+    # trans_array = []
+    # result_imgs = []
+    # import os
+    # if os.path.isdir(path):
+    #     files = os.listdir(path)
+    #     for file in files:
+    #         file_path = path + '/' + file
+    #         if os.path.isfile(file_path) and file_path.endswith('.txt'):
+    #             rots, trans = tr.read_transform_data(file_path)
+    #             rots_array.append(rots)
+    #             trans_array.append(trans)
+    #         elif os.path.isfile(file_path) and file_path.endswith('.png'):
+    #             img = cv2.imread(file_path)
+    #             imgs.append(img)
     # import time
     # start = time.time()
     # center_point, lines_array, result_imgs = find_ellipse_center_3d(imgs, rots_array, trans_array)
