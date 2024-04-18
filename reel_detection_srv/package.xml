@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>reel_detection_srv</name>
-  <version>0.0.1</version>
+  <version>1.0.0</version>
   <description>ROS2 service for ellipse fitting</description>
   <maintainer email="dill.dxh@gmail.com">Du Xiaohe</maintainer>
   <license>Apache License 2.0</license>

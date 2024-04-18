@@ -1,35 +1,10 @@
 import numpy as np
 import numpy.linalg as la
+from numpy.linalg import norm
 
 from reel_detection_srv.main_code import transformation as tr
 
-def calc_tildeH(coeffs):
-    # ax2+bxy+cy2+dx+ey+f
-    a,c,b,d,e,f = coeffs
-    # A = np.array([[a,b,d/2],[b,c/2,e/2],[d/2,e/2,f]])
-    A = np.array([[a,c/2,d/2],[c/2,b,e/2],[d/2,e/2,f]])
-    evals, evecs = la.eig(A)
-    if np.sum(np.sign(evals[:])) < 0:
-        A = -A
-        evals, evecs = la.eig(A)
-    
-    sorted_idx = np.argsort(evals)[::-1]
-    sorted_evals = evals[sorted_idx]
-    sorted_evecs = evecs[:, sorted_idx]
-    # sorted_evecs = evecs[sorted_indices, :]
-
-    𝚲 = np.array([[evals[0],0,0], [0,evals[1],0], [0,0,evals[2]]])
-    sorted_𝚲 = np.array([[sorted_evals[0],0,0], [0,sorted_evals[1],0], [0,0,sorted_evals[2]]])
-
-    # sorted_evals[:] = np.abs(evals[:])
-    M_eigen_sqrt = np.array([[1/np.sqrt(sorted_evals[0]),0,0],[0,1/np.sqrt(sorted_evals[1]),0],[0,0,1/np.sqrt(-sorted_evals[2])]])
-
-    O = sorted_evecs.T
-    tH = O.T @ M_eigen_sqrt
-    
-    return tH
-
-def create_Alvarez_matrix(coeffs, beta):
+def generate_Alvarez_matrix(coeffs):
 
     # ax2+bxy+cy2+dx+ey+f
     a,c,b,d,e,f = coeffs
@@ -51,21 +26,16 @@ def create_Alvarez_matrix(coeffs, beta):
 
     lambda1,lambda2,lambda3 = sorted_evals[:]
 
-    alpha1 = np.pi
-    alpha2 = np.pi/2
+    alpha = 0
+    beta = 0
 
-    # 0 and pi
-    val1 = lambda3*(lambda1-lambda2) / (lambda2*(lambda1+lambda3))
+    val = lambda3*(lambda1-lambda2) / (lambda2*(lambda1+lambda3))
     
-    # pi/2 and 3/2pi
-    val2 = lambda3*(lambda2-lambda1) / (lambda1*(lambda2+lambda3))
-
-    
-    a1 = np.sqrt(abs(val1))
+    a1 = np.sqrt(abs(val))
     a2 = -a1
 
     beta = np.pi
-    Ra = np.array([[np.cos(alpha1), np.sin(alpha1), 0], [-np.sin(alpha1), np.cos(alpha1), 0], [0, 0, 1]])
+    Ra = np.array([[np.cos(alpha), np.sin(alpha), 0], [-np.sin(alpha), np.cos(alpha), 0], [0, 0, 1]])
     Rb = np.array([[np.cos(beta), np.sin(beta), 0], [-np.sin(beta), np.cos(beta), 0], [0, 0, 1]])
     
     Ba1 = np.array([[np.sqrt(1+a1**2), 0, a1], [0, 1, 0], [a1, 0, np.sqrt(1+a1**2)]])
@@ -73,15 +43,7 @@ def create_Alvarez_matrix(coeffs, beta):
 
     H1 = tH @ Ra @ Ba1 @ Rb
     H2 = tH @ Ra @ Ba2 @ Rb
- 
- # other situation   
-    Ra2 = np.array([[np.cos(alpha2), np.sin(alpha2), 0], [-np.sin(alpha2), np.cos(alpha2), 0], [0, 0, 1]])
-    a3 = np.sqrt(abs(val2))
-    a4 = -a3
-    Ba3 = np.array([[np.sqrt(1+a3**2), 0, a3], [0, 1, 0], [a3, 0, np.sqrt(1+a3**2)]])
-    Ba4 = np.array([[np.sqrt(1+a4**2), 0, a4], [0, 1, 0], [a4, 0, np.sqrt(1+a4**2)]])
-    H3 = tH @ Ra2 @ Ba3 @ Rb
-    H4 = tH @ Ra2 @ Ba4 @ Rb
+
     return H1, H2
 
 def create_Alvarez_matrix2(coeffs, K):
@@ -103,10 +65,13 @@ def create_Alvarez_matrix2(coeffs, K):
 
     O = sorted_evecs.T
     tH = O.T @ M_eigen_sqrt
-
+    # print('O\n',O)
+    # print('A\n',M_eigen_sqrt)
+    # print('H(a)\n', tH)
     lambda1,lambda2,lambda3 = sorted_evals[:]
 
-    alpha = np.pi
+    # alpha = np.pi
+    alpha = 0
     beta = 0
     # 0 and pi
     val = lambda3*(lambda1-lambda2) / (lambda2*(lambda1+lambda3))
@@ -114,10 +79,8 @@ def create_Alvarez_matrix2(coeffs, K):
     
     a1 = np.sqrt(abs(val))
     a2 = -a1
-
-    Ra = np.array([[np.cos(alpha), np.sin(alpha), 0], [-np.sin(alpha), np.cos(alpha), 0], [0, 0, 1]])
-
     
+    Ra = np.array([[np.cos(alpha), np.sin(alpha), 0], [-np.sin(alpha), np.cos(alpha), 0], [0, 0, 1]])
     Rb = np.array([[np.cos(beta), np.sin(beta), 0], [-np.sin(beta), np.cos(beta), 0], [0, 0, 1]])
     
     Ba1 = np.array([[np.sqrt(1+a1**2), 0, a1], [0, 1, 0], [a1, 0, np.sqrt(1+a1**2)]])
@@ -157,9 +120,6 @@ def create_Alvarez_matrix2(coeffs, K):
     
     dim = 1
     
-    # if -np.pi/4 < rad < np.pi/4 or rad < -np.pi*3/4 or rad > np.pi*3/4:
-    #     dim = 1
-    
     # l1_x0 = K @ l1_x0.T
     # l1_x0 = l1_x0.T
     # l2_x0 = K @ l2_x0.T
@@ -175,13 +135,125 @@ def create_Alvarez_matrix2(coeffs, K):
     l1_y0 = l1_y0[:,:-1]
     l2_y0 = l2_y0[:,:-1]
     
-    # reverse = False
-    # if np.sign(dir1[0]) == np.sign(dir1[1]):
-    #     reverse = True
     
-    if (rate1 < rate2) == (dir1[dim] > 0):
+    if (rate1 <= rate2) == (dir1[dim] >= 0):
+        print('a =', a1)
         return H1, l1_y0, H2, l2_y0, dir1
+    print('a =', a2)
     return H2, l2_y0, H1, l1_y0, dir2
+
+def debug_create_Alvarez_matrix2(coeffs):
+
+    # ax2+bxy+cy2+dx+ey+f
+    a,c,b,d,e,f = coeffs
+    # A = np.array([[a,b,d/2],[b,c/2,e/2],[d/2,e/2,f]])
+    A = np.array([[a,c/2,d/2],[c/2,b,e/2],[d/2,e/2,f]])
+    evals, evecs = la.eig(A)
+    print('evals\n',evals)
+    if np.sum(np.sign(evals[:])) < 0:
+        A = -A
+        evals, evecs = la.eig(A)
+    
+    sorted_idx = np.argsort(evals)[::-1]
+    sorted_evals = evals[sorted_idx]
+    sorted_evecs = evecs[:, sorted_idx]
+
+    M_eigen_sqrt = np.array([[1/np.sqrt(sorted_evals[0]),0,0],[0,1/np.sqrt(sorted_evals[1]),0],[0,0,1/np.sqrt(-sorted_evals[2])]])
+
+    O = sorted_evecs.T
+    tH = O.T @ M_eigen_sqrt
+    # print('O\n',O)
+    # print('A\n',M_eigen_sqrt)
+    # print('H(a)\n', tH)
+    lambda1,lambda2,lambda3 = sorted_evals[:]
+
+    alpha = 0
+    beta = 0
+    # 0 and pi
+    val = lambda3*(lambda1-lambda2) / (lambda2*(lambda1+lambda3))
+
+    
+    a1 = np.sqrt(abs(val))
+    a2 = -a1
+    
+    Ra = np.array([[np.cos(alpha), np.sin(alpha), 0], [-np.sin(alpha), np.cos(alpha), 0], [0, 0, 1]])
+    Rb = np.array([[np.cos(beta), np.sin(beta), 0], [-np.sin(beta), np.cos(beta), 0], [0, 0, 1]])
+    
+    Ba1 = np.array([[np.sqrt(1+a1**2), 0, a1], [0, 1, 0], [a1, 0, np.sqrt(1+a1**2)]])
+    Ba2 = np.array([[np.sqrt(1+a2**2), 0, a2], [0, 1, 0], [a2, 0, np.sqrt(1+a2**2)]])
+
+    H1 = tH @ Ra @ Ba1 @ Rb
+    H2 = tH @ Ra @ Ba2 @ Rb
+    
+
+ # find correct H
+    l1_x0 = H1 @ np.array([[0,1,1],[0,0.5,1],[0,0,1],[0,-1,1]]).T
+    l1_x0 = l1_x0.T
+    l1_x0_hom = l1_x0 / l1_x0[:,-1][:,np.newaxis]
+    l2_x0 = H2 @ np.array([[0,1,1],[0,0.5,1],[0,0,1],[0,-1,1]]).T
+    l2_x0 = l2_x0.T
+    l2_x0_hom = l2_x0 / l2_x0[:,-1][:,np.newaxis]
+    
+    l1_y0 = H1 @ np.array([[1,0,1],[0.5,0,1],[0,0,1],[-1,0,1]]).T
+    l1_y0 = l1_y0.T
+    l1_y0_hom = l1_y0 / l1_y0[:,-1][:,np.newaxis]
+    l2_y0 = H2 @ np.array([[1,0,1],[0.5,0,1],[0,0,1],[-1,0,1]]).T
+    l2_y0 = l2_y0.T
+    l2_y0_hom = l2_y0 / l2_y0[:,-1][:,np.newaxis]
+    
+    dir1 = l1_y0_hom[2]-l1_y0_hom[3]
+    dir2 = l2_y0_hom[2]-l2_y0_hom[3]
+    # rate1 = np.linalg.norm(dir1)/np.linalg.norm([l1_y0_hom[0]-l1_y0_hom[3]])
+    # rate2 = np.linalg.norm(dir2)/np.linalg.norm([l2_y0_hom[0]-l2_y0_hom[3]])
+    
+    diay1 = l1_y0_hom[0]-l1_y0_hom[3]
+    diay2 = l2_y0_hom[0]-l2_y0_hom[3]
+    print('length:', norm(diay1), norm(diay2))
+    rate1 = abs(dir1[1]/diay1[1]) # ratio [0,-1] / [1,-1]
+    rate2 = abs(dir2[1]/diay2[1])
+    
+    rad = np.arctan2(dir1[1], dir1[0])
+    angle = np.rad2deg(rad)
+    
+    dim = 1
+    
+    # l1_x0 = K @ l1_x0.T
+    # l1_x0 = l1_x0.T
+    # l2_x0 = K @ l2_x0.T
+    # l2_x0 = l2_x0.T
+    
+    # l1_y0 = K @ l1_y0.T
+    # l1_y0 = l1_y0.T
+    # l2_y0 = K @ l2_y0.T
+    # l2_y0 = l2_y0.T
+    
+    # l1_x0 = l1_x0[:,:-1]
+    # l2_x0 = l2_x0[:,:-1]
+    # l1_y0 = l1_y0[:,:-1]
+    # l2_y0 = l2_y0[:,:-1]
+    cross_r1 = ((l1_y0_hom[0]-l1_y0_hom[1])/(l1_y0_hom[0]-l1_y0_hom[3]))/((l1_y0_hom[2]-l1_y0_hom[1])/(l1_y0_hom[2]-l1_y0_hom[3]))
+    cross_r2 = ((l2_y0_hom[0]-l2_y0_hom[1])/(l2_y0_hom[0]-l2_y0_hom[3]))/((l2_y0_hom[2]-l2_y0_hom[1])/(l2_y0_hom[2]-l2_y0_hom[3]))
+    print('cross ratio:', cross_r1, cross_r2)
+    
+    if (rate1 < rate2) == (dir1[dim] >= 0):
+        print('a =', a1)
+        return H1, l1_y0, H2, l2_y0, dir1, l1_x0, l2_x0
+    print('a =', a2)
+    return H2, l2_y0, H1, l1_y0, dir2, l2_x0, l1_x0
+
+    # center1 = H1 @ np.array([0,0,1]).T
+    # center1 = center1/center1[-1]
+    # center2 = H2 @ np.array([0,0,1]).T
+    # center2 = center2/center2[-1]
+    # norm1 = np.linalg.norm(center1[:-1])
+    # norm2 = np.linalg.norm(center2[:-1])
+    # if (norm1 > norm2):
+    #     print('a =', a1, a2)
+    #     print('norms:', norm1, norm2)
+    #     return H1, l1_y0, H2, l2_y0, dir1, l1_x0, l2_x0
+    # print('a =', a2, a1)
+    # print('norms:', norm2, norm1)
+    # return H2, l2_y0, H1, l1_y0, dir2, l2_x0, l1_x0
 
 def calc_point_line_distance(point, line_param):
     p = point.reshape((len(point),))
@@ -247,6 +319,22 @@ def get_world_line_params(point_2d, K, rots, trans):
     D = point_w - focal_w
     D = D/np.linalg.norm(D)
     return focal_w, D
+
+def find_ellipse_center(coeffs, is_acute = True):
+    
+    H1, H2 = generate_Alvarez_matrix(coeffs)
+    
+    unit_center = np.array([0,0,1])
+    
+    center1 = H1 @ unit_center
+    center2 = H2 @ unit_center
+    
+    center1 = center1 / center1[-1]
+    center2 = center2 / center2[-1]
+    
+    if (is_acute == (center1[1] < center2[1])):
+        return center1
+    return center2
 
 if __name__ == "__main__":
     # bin_length = 3

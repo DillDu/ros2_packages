@@ -1,6 +1,4 @@
 import numpy as np
-# import cv2
-# import matplotlib.pyplot as plt
 
 
 WIDTH = 640
@@ -13,6 +11,10 @@ def get_intrinsic_matrix(img):
     #           [0, 0, 1]])
     # # 1663x1247
     
+    # galaxy s23 3000x4000
+    K_s23 = np.array([[2.678166215927513349e+03, 0.000000000000000000e+00, 1.999625919480884704e+03],
+                      [0.000000000000000000e+00, 2.679508991653754947e+03, 1.453526119151558760e+03],
+                      [0.000000000000000000e+00, 0.000000000000000000e+00, 1.000000000000000000e+00]])
     # LAB
     K_480p = np.array([[604.817626953125, 0, 317.8514404296875],
                   [0, 604.719482421875, 249.26316833496094],
@@ -23,6 +25,17 @@ def get_intrinsic_matrix(img):
     
     if len(img) > 0 and img.shape[0] == 720:
         return K_720p
+
+    # if len(img) > 0 and img.shape[0] == 3000:
+    #     return K_s23
+    # if len(img) > 0 and img.shape[0] == 960:
+    #     [h,w] = img.shape[:2]
+    #     rx = w/4000
+    #     ry = h/3000
+    #     K_s23[0,:] *= rx
+    #     K_s23[1,:] *= ry
+    #     return K_s23
+    
     # if len(img) > 0:
     #     [h,w] = img.shape[:2]
     #     rx = w/WIDTH
@@ -44,7 +57,65 @@ def denormalize_img_points(points, K):
     points = np.vstack((points, np.ones(len(points[0]))))
     points = K @ points
     return points.T[:,:2]
+
+def normalize_orient_points(orient_points, K):
+    inv_K = np.linalg.inv(K)
+    # orient_points = orient_points.T
+    points = orient_points[:, :2]
+    # gradients = orient_points[:, 2:]
+    nx = orient_points[:, 2]
+    ny = orient_points[:, 3]
+    points = np.vstack((points.T, np.ones(len(points))))
+    points = inv_K @ points
+    points = points[:2,:]
+    scale_x = inv_K[0,0]
+    scale_y = inv_K[1,1]
+    # alpha = np.sqrt(1 / ((nx*scale_x)**2 + (ny*scale_y)**2))
+    # print(alpha)
+    nx_hat = scale_x * nx
+    ny_hat = scale_y * ny
+    norms = np.sqrt(nx_hat**2+ny_hat**2)
+    nx_hat = nx_hat / norms
+    ny_hat = ny_hat / norms
+    points = np.vstack((points, nx_hat))
+    points = np.vstack((points, ny_hat))
+        
+    return points.T
+
+def denormalize_orient_points(orient_points, K):
+    points = orient_points[:, :2]
+    nx = orient_points[:, 2]
+    ny = orient_points[:, 3]
+    points = np.vstack((points.T, np.ones(len(points))))
+    points = K @ points
+    points = points[:2,:]
+    scale_x = K[0,0]
+    scale_y = K[1,1]
+    nx = scale_x * nx
+    ny = scale_y * ny
+    norms = np.sqrt(nx**2+ny**2)
+    nx = nx / norms
+    ny = ny / norms
+    points = np.vstack((points, nx))
+    points = np.vstack((points, ny))
     
+    return points.T
+
+
+def normalize_ellipse_coeffs(coeffs, K):
+    a,b,c,d,e,f = coeffs
+    A = np.array([[a, b/2, d/2],
+                  [b/2, c, e/2],
+                  [d/2, e/2, f]])
+    
+    # sx = 1/K[0,0]
+    # sy = 1/K[1,1]
+    # C =  sx**2 * sy**2 * K.T @ A @ K
+
+    C = K.T @ A @ K
+    coeffs = np.array([C[0,0], 2*C[0,1], C[1,1], 2*C[0,2], 2*C[1,2], C[2,2]])
+    return coeffs
+
 def denormalize_ellipse_coeffs(normed_coeffs, K):
     a,b,c,d,e,f = normed_coeffs
     A = np.array([[a, b/2, d/2],
@@ -57,6 +128,7 @@ def denormalize_ellipse_coeffs(normed_coeffs, K):
 
     C = np.linalg.inv(K).T @ A @ np.linalg.inv(K)
     coeffs = np.array([C[0,0], 2*C[0,1], C[1,1], 2*C[0,2], 2*C[1,2], C[2,2]])
+    print(C)
     return coeffs
 
 

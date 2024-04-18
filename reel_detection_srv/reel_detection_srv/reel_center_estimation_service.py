@@ -22,7 +22,7 @@ class ReelCenterEstimationService(Node):
         rots_array = [np.array(request.rot1), np.array(request.rot2)]
         trans_array = [np.array(request.pos1),np.array(request.pos2)]
         
-        best_center, result_imgs, best_line_group, d_sum = rdm.find_ellipse_center_3d(imgs, rots_array, trans_array)
+        best_center, result_imgs, best_line_group, d_sum = rdm.orient_find_ellipse_center_3d(imgs, rots_array, trans_array)
         
         result_img_msgs = []
         for img in result_imgs:
