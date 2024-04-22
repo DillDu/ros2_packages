@@ -74,6 +74,8 @@ def time_func(func, *args, repeat = 1):
     print(f">>>>>> Execute time: {t.timeit(repeat):.4f}s <<<<<<")
     
 def get_file_paths(folder_path, *file_suffixes):
+    if folder_path[-1] == '/':
+        folder_path = folder_path[:-1]
     file_paths = []
     if len(file_suffixes) == 0:
         file_paths.extend(glob.glob(f"{folder_path}/*"))

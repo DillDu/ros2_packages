@@ -21,9 +21,9 @@ class ReelCenterEstimationService(Node):
         imgs = self.convert_imsgs_to_imgs(request.img_msgs)
         rots_array = [np.array(request.rot1), np.array(request.rot2)]
         trans_array = [np.array(request.pos1),np.array(request.pos2)]
-        
+        print('Processing...')
         best_center, result_imgs, best_line_group, d_sum = rdm.orient_find_ellipse_center_3d(imgs, rots_array, trans_array)
-        
+        print('Done.')
         result_img_msgs = []
         for img in result_imgs:
             img_msg = bridge.cv2_to_imgmsg(img)

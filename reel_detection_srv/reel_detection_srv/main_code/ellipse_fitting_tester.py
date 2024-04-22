@@ -83,18 +83,25 @@ def points_to_orient_points(points, orientation):
     
     return orient_points
 
-def orient_ellipse_fitting(img, show_contour = False, show_result = False):
-    if len(img.shape) > 2:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def orient_ellipse_fitting(img, show_contour = False, show_result = False, max_res = np.inf):
+    # if len(img.shape) > 2:
+    #     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    [h,w] = img.shape[:2]
+    if max(h,w) > max_res:
+        scale = max_res / max(h,w)
+        new_h = int(h * scale)
+        new_w = int(w * scale)
+        img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
     
     orientation = improc.get_img_orient(img, ksize=5)
-    [h,w] = img.shape[:2]
-    
-    result_img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-    contours = improc.get_contours(img)
-    # contours = improc.get_shattered_contours(img)
+    gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    result_img = cv2.cvtColor(gray_img,cv2.COLOR_GRAY2BGR)
+    # contours = improc.get_contours(img)
+    contours = improc.get_shattered_contours(gray_img)
     contour_img = result_img.copy()
-    sample_step_size = int((np.ceil(np.log(h*w)))/2)+2
+    contour_fitting = result_img.copy()
+    # sample_step_size = int((np.ceil(np.log(h*w)))/2)+2
+    sample_step_size = int((np.ceil(np.log(h*w)))/2)
     K = normalizer.get_intrinsic_matrix(img)
     
     normed_inlier_threshold = 0.0022
@@ -110,6 +117,7 @@ def orient_ellipse_fitting(img, show_contour = False, show_result = False):
     final_points = np.empty((0,4))
     
     for i_c in range(len(contours)):
+        cv2.drawContours(contour_img, [contours[i_c]], -1, get_color(i_c), 2)
         points = contours[i_c].squeeze(axis=1)
         points = points[::sample_step_size,:]
         # points = points[::2,:]
@@ -129,54 +137,72 @@ def orient_ellipse_fitting(img, show_contour = False, show_result = False):
         inlier_rate = float(len(inlier_indices)) / len(orient_points)
         if inlier_rate < min_inlier_rate:
             continue
-        
-        improc.draw_orient_points(contour_img, orient_points)
-        cv2.drawContours(contour_img, [contours[i_c]], -1, get_color(i_c), 2)
-        draw_ellipse(contour_img, ef.cart_to_pol(coeffs))
+        improc.draw_orient_points(contour_fitting, orient_points)
+        cv2.drawContours(contour_fitting, [contours[i_c]], -1, get_color(i_c), 2)
+        draw_ellipse(contour_fitting, ef.cart_to_pol(coeffs))
         
         # orient_points = orient_points[::2,:]
-        
+        # orient_points = improc.remove_near_points(orient_points, k=10)
         final_points = np.vstack((final_points, orient_points))
     
     if show_contour:  
-        cv2.imshow(f, contour_img)
+        cv2.imshow(f + ' contour', contour_img)
+        cv2.imshow(f + ' fitting', contour_fitting)
         cv2.waitKey()
 
 # ellipse fitting 
     ransac_inlier_threshold = 1.5
     
-    final_points = improc.remove_near_points(final_points, k=min(h,w)/64)
+    # final_points = improc.remove_near_points(final_points, k=min(h,w)/64)
+    final_points = improc.remove_near_points(final_points, k=10)
     improc.draw_points(result_img, final_points, 2, (255,0,0))
     # final_points = normalizer.normalize_orient_points(final_points, K)    
     best_coeffs, best_samples, best_inliers = ef.ransac_orient_ellipse_fit(final_points, ransac_inlier_threshold, confidence, max_iteration=max_iteration, max_failed_num=max_failed_num, max_eccentricity=max_eccentricity, min_sample_dist=min_sample_dist)
 
+    center = []
     if len(best_coeffs) > 0:
         # best_coeffs = normalizer.denormalize_ellipse_coeffs(best_coeffs, K)
         # best_samples = normalizer.denormalize_orient_points(best_samples, K)
         # best_inliers = normalizer.denormalize_orient_points(best_inliers, K)
         
-        draw_ellipse(result_img, ef.cart_to_pol(best_coeffs), color=(0,255,255))
+        draw_ellipse(result_img, ef.cart_to_pol(best_coeffs), color=(0, 128, 255))
         improc.draw_orient_points(result_img, best_samples, line_length=10, line_thickness=2)
         improc.draw_points(result_img, best_inliers, 2, (255,255,0))
     
     #center estimation
-        normed_coeffs = normalizer.normalize_ellipse_coeffs(best_coeffs, K)
-        normed_center = ce.find_ellipse_center(normed_coeffs)
-        center = K @ normed_center
-        center_int = center.astype(int)
-        # result_img = improc.draw_points(result_img, center, 4, (0,255,255))
-        cv2.circle(result_img, (center_int[0], center_int[1]), 5, (0,255,0),-1)
+        if len(K) > 0:
+            normed_coeffs = normalizer.normalize_ellipse_coeffs(best_coeffs, K)
+            # normed_center = ce.find_ellipse_center(normed_coeffs)
+            normed_center, H1, normed_center2, H2 = ce.find_ellipse_center(normed_coeffs) # debug
+            center = K @ normed_center
+            center_int = center.astype(int)
+            cv2.circle(result_img, (center_int[0], center_int[1]), 5, (0,255,0),-1)
+            
+            # center2 = (K @ normed_center2).astype(int)
+            # cv2.circle(result_img, (center2[0], center2[1]), 5, (0,0,255),-1)
     
     if show_result:
-        cv2.imshow('result: '+f, result_img)
+        cv2.imshow(f + ' result', result_img)
         cv2.waitKey()
     
-    return best_coeffs, result_img, center        
+    return best_coeffs, result_img, center
+    # return best_coeffs, result_img, center, H1, center2, H2       
 
-def test_orient_ellipse_fitting(file_path, show_contour = False, show_result = False):
-    print("file:", os.path.basename(file_path))
-    img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-    orient_ellipse_fitting(img, show_contour, show_result)
+def test_orient_ellipse_fitting(file_path, show_contour = False, show_result = False, max_res = np.inf):
+    file_name = os.path.basename(file_path)
+    print("file:", file_name)
+    
+    # img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread(file_path)
+    orient_ellipse_fitting(img, show_contour, show_result, max_res)
+#debug
+    # img2 = cv2.imread(file_path)
+    # best_coeffs, result_img, center, H1, center2, H2 = orient_ellipse_fitting(img, show_contour, show_result, max_res)
+    # cv2.imwrite('fitting_result/' + file_name, img)
+    # cv2.imwrite('fitting_result/' + file_name.split('.')[0] + '.result.png', result_img)
+    # with open('fitting_result/'+file_name.split('.')[0]+'.txt', 'w') as txt:
+    #     np.savetxt(txt, H1, header='H1 = ')
+    #     np.savetxt(txt, H2, header='H2 = ')
 
 def direct_ellipse_fitting(img, show_contour = False, show_result = False):
     if len(img.shape) > 2:
@@ -273,7 +299,7 @@ if __name__ == "__main__":
     file_paths = get_file_paths('reels/reel_data', 'png', 'jpg', 'jpeg')
     # file_paths = get_file_paths('test_sample', 'png', 'jpg', 'jpeg')
     for f in file_paths:
-        orient_ellipse_fitting(f, show_result=True)
+        test_orient_ellipse_fitting(f, show_contour=False, show_result=True)
         # test_ellipse_fitting(f, show_result=True)
         # time_func(test_ellipse_fitting,f)
         pass

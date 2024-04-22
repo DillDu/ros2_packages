@@ -336,23 +336,23 @@ def orient_find_ellipse_center_3d(imgs, rots_array, trans_array):
     K = normalizer.get_intrinsic_matrix(imgs[0])
     lines_array = []
     result_imgs = []
+    print('Fitting ellipse...')
     for i, img in enumerate(imgs):
         rots = rots_array[i]
         trans = trans_array[i]
-        
         _, result_img, center = orient_ellipse_fitting(img, False, False)
         L = ce.get_world_line_params(center, K, rots, trans)
         lines_array.append(L)
         result_imgs.append(result_img)
 
-        center_point = ce.find_closest_point_to_lines(lines_array)
-        
-        d_sum = 0
-        for line in lines_array:
-            d,_ = ce.calc_point_line_distance(center_point, line)
-            d_sum += d
-        best_line_group = lines_array
-        best_center = center_point
+    print('Estimating 3D center...')
+    center_point = ce.find_closest_point_to_lines(lines_array)
+    d_sum = 0
+    for line in lines_array:
+        d,_ = ce.calc_point_line_distance(center_point, line)
+        d_sum += d
+    best_line_group = lines_array
+    best_center = center_point
         
     # print(center_point)
     # print(d_sum)

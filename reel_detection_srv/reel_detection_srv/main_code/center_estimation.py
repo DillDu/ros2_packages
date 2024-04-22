@@ -18,8 +18,8 @@ def generate_Alvarez_matrix(coeffs):
     sorted_idx = np.argsort(evals)[::-1]
     sorted_evals = evals[sorted_idx]
     sorted_evecs = evecs[:, sorted_idx]
-
     M_eigen_sqrt = np.array([[1/np.sqrt(sorted_evals[0]),0,0],[0,1/np.sqrt(sorted_evals[1]),0],[0,0,1/np.sqrt(-sorted_evals[2])]])
+    # print('𝚲 = \n', M_eigen_sqrt)
 
     O = sorted_evecs.T
     tH = O.T @ M_eigen_sqrt
@@ -137,9 +137,9 @@ def create_Alvarez_matrix2(coeffs, K):
     
     
     if (rate1 <= rate2) == (dir1[dim] >= 0):
-        print('a =', a1)
+        # print('a =', a1)
         return H1, l1_y0, H2, l2_y0, dir1
-    print('a =', a2)
+    # print('a =', a2)
     return H2, l2_y0, H1, l1_y0, dir2
 
 def debug_create_Alvarez_matrix2(coeffs):
@@ -333,8 +333,10 @@ def find_ellipse_center(coeffs, is_acute = True):
     center2 = center2 / center2[-1]
     
     if (is_acute == (center1[1] < center2[1])):
-        return center1
-    return center2
+        # return center1
+        return center1, H1, center2, H2
+    # return center2
+    return center2, H2, center1, H1
 
 if __name__ == "__main__":
     # bin_length = 3

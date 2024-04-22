@@ -255,7 +255,6 @@ def get_contours(img, min_point_num = 50, filter = True):
     # img = sharpen_img(img)
     edge_img = get_edge_img(img)
     edge_img = remove_corners(edge_img)
-    # edge_img = remove_lines(edge_img.astype(np.uint8))
     edge_img = remove_lines(edge_img)
 
     contours, _ = cv2.findContours(edge_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -310,7 +309,7 @@ def get_shattered_contours(img, filter = True):
         if approx.shape[0] >= 2:
             for point in approx:
                 x, y = point.ravel()
-                cv2.circle(edge_img, [x,y], 1, 0, -1)
+                cv2.circle(edge_img, (x,y), 1, 0, -1)
         
     contours, _ = cv2.findContours(edge_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
